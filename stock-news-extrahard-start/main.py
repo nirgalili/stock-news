@@ -1,10 +1,11 @@
 import itertools
-
+from twilio.rest import Client
 import requests
 import os
 STOCK = "TSLA"
 COMPANY_NAME = "Tesla Inc"
 alphavantage_key = os.environ["key_alphavantage"]
+newsapi_key = os.environ["key_newsapi"]
 
 print(type(alphavantage_key))
 
@@ -18,7 +19,6 @@ parameters = {
     "datatype": "json",
     "apikey": alphavantage_key,
 }
-
 
 url = 'https://www.alphavantage.co/query'
 r = requests.get(url, params=parameters)
@@ -41,13 +41,74 @@ close_day_before_yesterday_plus_5_percent = close_day_before_yesterday * 1.05
 if close_yesterday < close_day_before_yesterday_minus_5_percent or \
         close_yesterday > close_day_before_yesterday_plus_5_percent:
     print("Get News")
+    percentage_change = round((close_yesterday - close_day_before_yesterday) / close_yesterday * 100, 2)
+    if percentage_change > 0:
+        triangle_sign = "🔺"
+    else:
+        triangle_sign = "🔻"
 
 
 ## STEP 2: Use https://newsapi.org
 # Instead of printing ("Get News"), actually get the first 3 news pieces for the COMPANY_NAME. 
 
+    parameters = {
+        "qInTitle": COMPANY_NAME,
+        "apiKey": newsapi_key,
+    }
+
+    url = "https://newsapi.org/v2/everything"
+    r = requests.get(url, params=parameters)
+    data = r.json()
+    print(data)
+    print("----------------------------------------------------------------")
+
+    first_3_news_piece_list = data["articles"][:3]
+    title_list = [i["title"] for i in first_3_news_piece_list]
+    print(title_list)
+    print("----------------------------------------------------------------")
+    url_list = [i["url"] for i in first_3_news_piece_list]
+    print(url_list)
+    print("----------------------------------------------------------------")
+
+
 ## STEP 3: Use https://www.twilio.com
 # Send a seperate message with the percentage change and each article's title and description to your phone number. 
+
+    account_sid = os.environ['TWILIO_ACCOUNT_SID']
+    auth_token = os.environ['TWILIO_AUTH_TOKEN']
+    client = Client(account_sid, auth_token)
+
+    message = client.messages \
+                    .create(
+                         body=f"\n"
+                              f"TSLA: {triangle_sign}{percentage_change}%\n"
+                              f"Headline: {title_list[0]}\n"
+                              f"url: {url_list[0]}",
+                         from_="+19039450694",
+                         to="+972545898999"
+                     )
+
+    message = client.messages \
+                    .create(
+                         body=f"\n"
+                              f"TSLA: {triangle_sign}{percentage_change}%\n"
+                              f"Headline: {title_list[1]}\n"
+                              f"url: {url_list[1]}",
+                         from_="+19039450694",
+                         to="+972545898999"
+                     )
+
+    message = client.messages \
+                    .create(
+                         body=f"\n"
+                              f"TSLA: {triangle_sign}{percentage_change}%\n"
+                              f"Headline: {title_list[2]}\n"
+                              f"url: {url_list[2]}",
+                         from_="+19039450694",
+                         to="+972545898999"
+                     )
+
+    print(message.sid)
 
 
 #Optional: Format the SMS message like this: 
