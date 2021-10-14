@@ -26,12 +26,21 @@ data = r.json()
 # two_last_days_data = data["Time Series (Daily)"]
 two_last_days_data = dict(itertools.islice(data["Time Series (Daily)"].items(), 2))
 
+yesterday = list(two_last_days_data.items())[0]
+day_before_yesterday = list(two_last_days_data.items())[1]
 
-print(data)
+yesterday_date = next(iter(yesterday))
+day_before_yesterday_date = next(iter(day_before_yesterday))
 
-print(two_last_days_data)
+close_yesterday = float(two_last_days_data[yesterday_date]["4. close"])
+close_day_before_yesterday = float(two_last_days_data[day_before_yesterday_date]["4. close"])
 
+close_day_before_yesterday_minus_5_percent = close_day_before_yesterday * .95
+close_day_before_yesterday_plus_5_percent = close_day_before_yesterday * 1.05
 
+if close_yesterday < close_day_before_yesterday_minus_5_percent or \
+        close_yesterday > close_day_before_yesterday_plus_5_percent:
+    print("Get News")
 
 
 ## STEP 2: Use https://newsapi.org
